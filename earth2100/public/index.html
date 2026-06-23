@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Earth2100 — Sea Level Rise Analyzer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="stage">
+      <header id="topbar">
+        <div class="brand">
+          <span class="brand-mark">≈</span>
+          <span class="brand-name">EARTH<b>2100</b></span>
+          <span class="brand-sub">NOAA tide-gauge sea level analyzer</span>
+        </div>
+        <div class="controls">
+          <div class="scenario" role="group" aria-label="Emission scenario">
+            <button data-scenario="ssp126">SSP1-2.6</button>
+            <button data-scenario="ssp245" class="active">SSP2-4.5</button>
+            <button data-scenario="ssp585">SSP5-8.5</button>
+          </div>
+          <button id="playBtn" aria-label="Play time-lapse">▶ Play</button>
+        </div>
+      </header>
+
+      <div id="map" aria-label="Map of NOAA tide-gauge stations and analyzed coastal cities"></div>
+
+      <div id="timeline">
+        <div class="legend" aria-hidden="true">
+          <span class="grp">STATIONS</span>
+          <span><i class="dotmark stn"></i>NOAA gauge</span>
+          <span class="grp">CITY RISK 2100</span>
+          <span><i class="sw mod"></i>moderate</span>
+          <span><i class="sw high"></i>high</span>
+          <span><i class="sw ext"></i>extreme</span>
+          <span><i class="sw lowc"></i>low confidence</span>
+        </div>
+        <input id="yearSlider" type="range" min="1854" max="2100" step="1" value="2024" aria-label="Year" />
+        <div class="ticks">
+          <span>1854</span><span>1900</span><span>1950</span>
+          <span>2024</span><span>2060</span><span>2100</span>
+        </div>
+      </div>
+    </section>
+
+    <aside id="terminal" aria-label="Sea level analyzer readout">
+      <div class="term-head">
+        <span class="dot"></span>SEA&nbsp;LEVEL&nbsp;ANALYZER<span class="ver">NOAA</span>
+      </div>
+
+      <div class="readout">
+        <div class="metric big">
+          <label>YEAR <span id="rState" class="state">OBSERVED</span></label>
+          <output id="rYear">2024</output>
+        </div>
+        <div class="metric big accent">
+          <label>MEAN RISE vs 2024</label>
+          <output id="rRise">0 mm</output>
+        </div>
+        <div class="metric">
+          <label>MEAN RATE</label>
+          <output id="rRate">2.6 mm/yr</output>
+        </div>
+        <div class="metric">
+          <label>SCENARIO</label>
+          <output id="rScenario">SSP2-4.5</output>
+        </div>
+        <div class="metric">
+          <label>OBSERVED TREND</label>
+          <output id="rTrend">2.61 mm/yr</output>
+        </div>
+        <div class="metric">
+          <label>EUSTATIC (corr.)</label>
+          <output id="rEustatic">1.65 mm/yr</output>
+        </div>
+      </div>
+
+      <div class="block grow">
+        <label>STATION RISE vs 2024 — <span id="rStateInline">observed</span></label>
+        <div id="rStations" class="stations"></div>
+      </div>
+
+      <div class="term-foot" id="rFoot"></div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
