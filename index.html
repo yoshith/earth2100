@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Earth2100 — Sea Level Rise Analyzer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="stage">
+      <header id="topbar">
+        <div class="brand">
+          <span class="brand-mark">≈</span>
+          <span class="brand-name">EARTH<b>2100</b></span>
+          <span class="brand-sub">NOAA tide-gauge sea level analyzer</span>
+        </div>
+        <div class="controls">
+          <div class="scenario" role="group" aria-label="Emission scenario">
+            <button data-scenario="ssp126">SSP1-2.6</button>
+            <button data-scenario="ssp245" class="active">SSP2-4.5</button>
+            <button data-scenario="ssp585">SSP5-8.5</button>
+          </div>
+          <button id="playBtn" aria-label="Play time-lapse">▶ Play</button>
+        </div>
+      </header>
+
+      <div id="map" aria-label="Map of NOAA tide-gauge stations and analyzed coastal cities"></div>
+
+      <div id="timeline">
+        <div class="legend" aria-hidden="true">
+          <span class="grp">STATIONS</span>
+          <span><i class="dotmark stn"></i>NOAA gauge</span>
+          <span class="grp">CITY RISK 2100</span>
+          <span><i class="sw mod"></i>moderate</span>
+          <span><i class="sw high"></i>high</span>
+          <span><i class="sw ext"></i>extreme</span>
+          <span><i class="sw lowc"></i>low confidence</span>
+        </div>
+        <input id="yearSlider" type="range" min="1854" max="2100" step="1" value="2024" aria-label="Year" />
+        <div class="ticks">
+          <span>1854</span><span>1900</span><span>1950</span>
+          <span>2024</span><span>2060</span><span>2100</span>
+        </div>
+      </div>
+    </section>
+
+    <aside id="terminal" aria-label="Sea level analyzer readout">
+      <div class="term-head">
+        <span class="dot"></span>SEA&nbsp;LEVEL&nbsp;ANALYZER<span class="ver">NOAA</span>
+      </div>
+
+      <div class="readout">
+        <div class="metric big">
+          <label>YEAR <span id="rState" class="state">OBSERVED</span></label>
+          <output id="rYear">2024</output>
+        </div>
+        <div class="metric big accent">
+          <label>MEAN RISE vs 2024</label>
+          <output id="rRise">0 mm</output>
+        </div>
+        <div class="metric">
+          <label>MEAN RATE</label>
+          <output id="rRate">2.6 mm/yr</output>
+        </div>
+        <div class="metric">
+          <label>SCENARIO</label>
+          <output id="rScenario">SSP2-4.5</output>
+        </div>
+        <div class="metric">
+          <label>OBSERVED TREND</label>
+          <output id="rTrend">2.61 mm/yr</output>
+        </div>
+        <div class="metric">
+          <label>EUSTATIC (corr.)</label>
+          <output id="rEustatic">1.65 mm/yr</output>
+        </div>
+        <div class="metric wide">
+          <label>RECENT 19-YR RATE</label>
+          <output id="rRecent">—</output>
+        </div>
+      </div>
+
+      <div class="block grow">
+        <label>STATION RISE vs 2024 — <span id="rStateInline">observed</span></label>
+        <div id="rStations" class="stations"></div>
+      </div>
+
+      <div class="term-foot" id="rFoot"></div>
+    </aside>
+
+    <section id="inspector" hidden aria-label="Rate through time">
+      <header class="ri-head">
+        <div class="ri-id">
+          <h2 id="riTitle">Station</h2>
+          <p id="riStatus">loading</p>
+        </div>
+        <div class="ri-pick">
+          <select id="riStation" aria-label="Station"></select>
+          <button id="riClose" aria-label="Close rate inspector">Close</button>
+        </div>
+      </header>
+
+      <div id="riBody" class="ri-body">
+        <div class="ri-figures">
+          <figure class="ri-fig">
+            <figcaption>
+              How fast sea level was rising, from a rolling window fit
+              <span class="ri-win" id="riWindow" role="group" aria-label="Window length">
+                <button data-window="10">10 yr</button>
+                <button data-window="19" class="active">19 yr</button>
+                <button data-window="38">38 yr</button>
+              </span>
+            </figcaption>
+            <div id="riChartRate" class="ri-chart"></div>
+            <p class="ri-legend">
+              <span class="k k-rate"></span>window rate
+              <span class="k k-band"></span>95% interval
+              <span class="k k-ref"></span>full record
+              <span class="k k-end"></span>8-year mean difference
+            </p>
+            <p class="ri-note" id="riPhi"></p>
+            <p class="ri-note">
+              Windows are 19 years rather than a round 20 because sea level is modulated by the
+              18.61-year lunar nodal cycle, and a window that is not close to a whole multiple of it
+              folds that modulation into the slope. Intervals are widened for month-to-month
+              autocorrelation, which plain least squares ignores.
+            </p>
+          </figure>
+
+          <figure class="ri-fig">
+            <figcaption>Where the rise comes from</figcaption>
+            <div id="riChartSplit" class="ri-chart"></div>
+            <p class="ri-legend">
+              <span class="k k-annual"></span>yearly
+              <span class="k k-total"></span>8-year mean
+              <span class="k k-land"></span>land motion
+              <span class="k k-ocean"></span>ocean
+            </p>
+            <p class="ri-note">
+              Land motion is treated as a constant rate, so its line is straight. Every bend in the
+              total therefore belongs to the ocean term.
+            </p>
+          </figure>
+        </div>
+
+        <div class="ri-numbers">
+          <div class="ri-stat">
+            <label>Full record</label>
+            <output id="riCentury">—</output>
+            <small id="riCenturyRange">—</small>
+          </div>
+          <div class="ri-stat accent">
+            <label>Most recent window</label>
+            <output id="riRecent">—</output>
+            <small id="riRecentRange">—</small>
+          </div>
+          <div class="ri-stat">
+            <label>Recent vs full record</label>
+            <output id="riRatio">—</output>
+            <small id="riRatioNote">mm/yr, 95% intervals</small>
+          </div>
+          <div class="ri-stat">
+            <label>Endpoint difference</label>
+            <output id="riEndpoint">—</output>
+            <small id="riEndpointRange">—</small>
+          </div>
+
+          <div class="ri-split">
+            <h3>Land and ocean</h3>
+            <table>
+              <tr><td>land motion</td><td id="riLand">—</td></tr>
+              <tr><td>ocean, full record</td><td id="riOceanCentury">—</td></tr>
+              <tr><td>ocean, recent window</td><td id="riOceanRecent">—</td></tr>
+            </table>
+            <p class="vlm-src" id="riVlmSource"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="rates.js"></script>
+</body>
+</html>

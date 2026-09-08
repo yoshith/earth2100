@@ -1,0 +1,19 @@
+{
+  "name": "earth2100-sea-level-sim",
+  "version": "1.0.0",
+  "description": "Interactive sea level rise analyzer: NOAA tide-gauge trends through time, with the land/ocean split.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "fetch": "node scripts/fetch-noaa.js",
+    "test": "node test/trends.test.js && node test/parse.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "license": "MIT"
+}
